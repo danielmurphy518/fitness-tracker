@@ -13,6 +13,15 @@ COLUMNS = [
     'Total KJ', 'Altitude Gain', 'Average Heart Rate', 'Effort', 'Pace', 'Type'
 ]
 
+
+def append_sample_activities(n=10):
+    new_data = generate_sample_data().head(n)
+    if os.path.exists(CSV_PATH):
+        new_data.to_csv(CSV_PATH, mode='a', header=False, index=False)
+    else:
+        new_data.to_csv(CSV_PATH, index=False)
+        append_sample_activities(10)
+
 # Sample activity generator
 def generate_sample_data():
     types = ['Run', 'Ride', 'Walk']
@@ -87,8 +96,6 @@ app.layout = html.Div([
     html.Br(),
     dash_table.DataTable(id='table', data=df.to_dict('records'), page_size=10),
     html.Br(),
-    html.H5("Distance by Date (Histogram)"),
-    dcc.Graph(id='histogram', figure=px.histogram(df, x='Date', y='Distance', histfunc='avg')),
     html.H5("Activity Scatter Plot"),
     dcc.Graph(id='scatter', figure=px.scatter(
         df, x='Date', y='Distance', color='Type', size='Effort',
@@ -110,7 +117,6 @@ def toggle_modal(open_clicks, close_clicks, submit_clicks, is_open):
 # Submit callback
 @app.callback(
     [Output("table", "data"),
-     Output("histogram", "figure"),
      Output("scatter", "figure")],
     [Input("submit", "n_clicks")],
     [
@@ -147,7 +153,6 @@ def add_entry(n_clicks, date, workout, elapsed, distance, active, total, altitud
         updated_df = pd.read_csv(CSV_PATH)
         return (
             updated_df.to_dict('records'),
-            px.histogram(updated_df, x='Date', y='Distance', histfunc='avg'),
             px.scatter(updated_df, x='Date', y='Distance', color='Type', size='Effort',
                        hover_name='Type', title='Workouts by Date')
         )
@@ -155,4 +160,5 @@ def add_entry(n_clicks, date, workout, elapsed, distance, active, total, altitud
 
 # Run
 if __name__ == '__main__':
+    append_sample_activities(10)
     app.run(debug=True)
